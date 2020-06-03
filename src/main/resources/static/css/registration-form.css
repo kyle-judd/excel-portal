@@ -1,0 +1,34 @@
+body {
+	background: linear-gradient( rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.5) ), url('/images/photo-1468434453985-b1ca3b555f00.jpeg');
+	background-repeat: no-repeat;
+	background-size: cover;
+	background-position: center;
+	background-attachment: fixed;
+	font-family: 'Montserrat', sans-serif;
+}
+
+label {
+	color: white;
+	letter-spacing: 5px;
+}
+
+#form-margin {
+	margin-top: 200px;
+}
+
+button {
+	letter-spacing: 5px;
+	display: block;
+}
+
+.btn {
+	background: rgb(0, 128, 0);
+	border: none;
+	letter-spacing: 3px;
+	margin-left: 33%;
+}
+
+.btn:hover {
+	background: white;
+	color: rgb(0, 128, 0);
+}

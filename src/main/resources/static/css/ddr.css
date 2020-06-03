@@ -1,0 +1,52 @@
+body {
+	background: linear-gradient( rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.5) ), url('/images/photo-1468434453985-b1ca3b555f00.jpeg');
+	background-repeat: no-repeat;
+	background-size: cover;
+	background-position: center;
+	background-attachment: fixed;
+	font-family: 'Montserrat', sans-serif;
+}
+
+h1 {
+	letter-spacing: 5px;
+	font-weight: 100;
+	color: white;
+}
+
+.inputfile {
+	width: 0.1px;
+	height: 0.1px;
+	opacity: 0;
+	overflow: hidden;
+	position: absolute;
+	z-index: -1;
+}
+
+.inputfile + label {
+    font-size: 1.25em;
+    font-weight: 700;
+    color: white;
+    background-color: black;
+    display: inline-block;
+}
+
+.inputfile:focus + label,
+.inputfile + label:hover {
+    background-color: red;
+}
+
+.inputfile + label {
+	cursor: pointer; /* "hand" cursor */
+}
+
+.btn {
+	background: white;
+	border: none;
+	letter-spacing: 3px;
+	color: rgb(0, 128, 0);
+}
+
+.btn:hover {
+	background: rgb(0, 128, 0);
+	color: white;
+}

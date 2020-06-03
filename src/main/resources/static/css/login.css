@@ -1,0 +1,44 @@
+html, body {
+	height: 100%;
+	font-family: 'Montserrat', sans-serif;
+	color: white;
+}
+
+body {
+	background: linear-gradient( rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.5) ), url('/images/photo-1468434453985-b1ca3b555f00.jpeg');
+	background-repeat: no-repeat;
+	background-size: cover;
+	background-position: center;
+}
+
+h1 {
+	font-weight: 100;
+}
+
+.btn {
+	background: rgb(0, 128, 0);
+	border: none;
+	letter-spacing: 3px;
+}
+
+.btn:hover {
+	background: white;
+	color: rgb(0, 128, 0);
+}
+
+.form-control:focus {
+  border-color: rgb(0, 128, 0);
+  box-shadow: inset 0 1px 1px rgba(0, 128, 0, 0.075), 0 0 8px rgba(0, 128, 0, 0.6);
+}
+
+label {
+	letter-spacing: 5px;
+}
+
+#form-margin {
+	margin-top: 200px;
+}
+
+.checkbox-teal [type="checkbox"]:checked+label:before {
+  border-color: transparent #009688 #009688 transparent;
+}
