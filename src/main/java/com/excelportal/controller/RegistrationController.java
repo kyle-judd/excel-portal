@@ -56,6 +56,12 @@ public class RegistrationController {
 			return "registration-form";
 		}
 		
+		if(userDTO.getPassword() == null) {
+			model.addAttribute("newUser", new UserDTO());
+			model.addAttribute("message", "Please enter a password");
+			return "registration-form";
+		}
+		
 		userService.saveUser(userDTO);
 		
 		return "registration-success";

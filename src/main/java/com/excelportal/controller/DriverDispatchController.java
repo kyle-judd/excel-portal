@@ -38,12 +38,6 @@ public class DriverDispatchController {
         response.setHeader("Content-Disposition", "attachment; filename=DriverDispatchReport.xlsx");
 		ByteArrayInputStream stream = driverDataService.parseForDriverOverrideMiles(file);
 		IOUtils.copy(stream, response.getOutputStream());
-		response.sendRedirect("/driverDispatchReport/downloadStart");
-	}
-	
-	@GetMapping("/downloadStart")
-	public String downloadStart() {
-		return "download-start.html";
 	}
 	
 	@GetMapping("/download")
