@@ -5,22 +5,32 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
 import javax.persistence.Column;
 
+import org.apache.poi.common.usermodel.HyperlinkType;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.ClientAnchor;
 import org.apache.poi.ss.usermodel.Color;
+import org.apache.poi.ss.usermodel.CreationHelper;
+import org.apache.poi.ss.usermodel.DataFormat;
 import org.apache.poi.ss.usermodel.ExtendedColor;
 import org.apache.poi.ss.usermodel.FillPatternType;
+import org.apache.poi.ss.usermodel.FormulaEvaluator;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
+import org.apache.poi.ss.usermodel.Hyperlink;
 import org.apache.poi.ss.usermodel.IndexedColors;
+import org.apache.poi.ss.usermodel.RichTextString;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.VerticalAlignment;
+import org.apache.poi.ss.util.AreaReference;
+import org.apache.poi.ss.util.CellReference;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.jboss.logging.Logger;
 import org.springframework.stereotype.Service;
@@ -53,21 +63,25 @@ public class TipExceptionService {
 		Map<String, Integer> columnNameMap = new HashMap<>();
 		
 		try {
-			
+			// read multipart file into workbook
 			workbook = new XSSFWorkbook(tipExceptionReport.getInputStream());
 			
+			// tip exception just has one sheet
 			Sheet sheet = workbook.getSheetAt(0);
 			
+			// row where column headers are located
 			Row headerRow = sheet.getRow(3);
 			
+			// map the column header string to their indexes for easy reference
 			columnNameMap = ExcelUtilityHelper.mapColumnNamesToIndex(headerRow);
 			
+			// total rows to loop through
 			int totalRows = sheet.getPhysicalNumberOfRows();
 			
 			for(int indexOfRow = 5; indexOfRow < totalRows; indexOfRow++) {
 				
 				Row currentRow = sheet.getRow(indexOfRow);
-				
+								
 				int indexOfTipColumn = columnNameMap.get("Tip");
 				
 				Cell tipCell = currentRow.getCell(indexOfTipColumn);
@@ -96,14 +110,23 @@ public class TipExceptionService {
 				}
 
 			}
-	
+			
+			// remove title rows
+			for(int indexOfRow = 0; indexOfRow < 3; indexOfRow++) {
+				sheet.removeRow(sheet.getRow(indexOfRow));
+			}
+			
+			// remove the empty rows
 			ExcelUtilityHelper.removeEmptyRows(sheet);
 			
-			int totalRowsAfterRemovingEmptyRows = sheet.getPhysicalNumberOfRows();
+			int totalRowsAfterRemovingEmptyRows = sheet.getPhysicalNumberOfRows();		
 			
-			for(int indexOfRow = 5; indexOfRow < totalRowsAfterRemovingEmptyRows; indexOfRow++) {
+			// styles all the cells accordingly
+			for(int indexOfRow = 2; indexOfRow < totalRowsAfterRemovingEmptyRows; indexOfRow++) {
 				
 				Row currentRow = sheet.getRow(indexOfRow);
+				
+				LOGGER.warn("BEFORE STYLING BUSINESS DATE =====> " + currentRow.getCell(columnNameMap.get("Business Date")).getNumericCellValue());
 				
 				int indexOfTipColumn = columnNameMap.get("Tip");
 				
@@ -115,15 +138,11 @@ public class TipExceptionService {
 				
 			}
 			
-			/*for(int indexOfRow = 5; indexOfRow < totalRowsAfterRemovingEmptyRows; indexOfRow++) {
-				Row currentRow = sheet.getRow(indexOfRow);
-				int indexOfTipPercentColumn = columnNameMap.get("Tip Pct");
-				Cell tipPercentCell = currentRow.getCell(indexOfTipPercentColumn);
-				tipPercentCell.setCellValue(round(tipPercentCell.getNumericCellValue() * 100, 2));
-				CellStyle style = workbook.createCellStyle();
-				style.setDataFormat(workbook.createDataFormat().getFormat("0.000%"));
-				tipPercentCell.setCellStyle(style);
-			}*/
+			for(int i = 0; i < 4; i++) {
+				for(int indexOfColumnToBeDeleted = columnNameMap.get("Card Type"); indexOfColumnToBeDeleted < sheet.getRow(0).getPhysicalNumberOfCells(); indexOfColumnToBeDeleted++) {
+					ExcelUtilityHelper.deleteColumn(sheet, indexOfColumnToBeDeleted);
+				}
+			}
 			
 		} catch(Exception e) {
 			e.printStackTrace();
@@ -141,8 +160,14 @@ public class TipExceptionService {
 			currentRow.getCell(0).setCellStyle(storeStyle);
 			for(int indexOfFirstNonStoreCell = 1; indexOfFirstNonStoreCell < currentRow.getPhysicalNumberOfCells(); indexOfFirstNonStoreCell++) {
 				if(!(indexOfFirstNonStoreCell == columnNameMap.get("Tip Pct"))) {
-					CellStyle nonStoreStyle = createNonStoreCellStyle(color);
-					currentRow.getCell(indexOfFirstNonStoreCell).setCellStyle(nonStoreStyle);
+					if(!(indexOfFirstNonStoreCell == columnNameMap.get("Business Date"))) {
+						CellStyle nonStoreStyle = createNonStoreCellStyle(color);
+						currentRow.getCell(indexOfFirstNonStoreCell).setCellStyle(nonStoreStyle);
+					} else {
+						CellStyle businessDateStyle = createBusinessDateCellStyle(color);
+						currentRow.getCell(indexOfFirstNonStoreCell).setCellStyle(businessDateStyle);
+					}
+					
 				} else {					
 					CellStyle tipPercentageStyle = createTipPercentageCellStyle(color);
 					currentRow.getCell(indexOfFirstNonStoreCell).setCellStyle(tipPercentageStyle);
@@ -155,8 +180,14 @@ public class TipExceptionService {
 			currentRow.getCell(0).setCellStyle(storeStyle);
 			for(int indexOfFirstNonStoreCell = 1; indexOfFirstNonStoreCell < currentRow.getPhysicalNumberOfCells(); indexOfFirstNonStoreCell++) {
 				if(!(indexOfFirstNonStoreCell == columnNameMap.get("Tip Pct"))) {
-					CellStyle nonStoreStyle = createNonStoreCellStyle(color);
-					currentRow.getCell(indexOfFirstNonStoreCell).setCellStyle(nonStoreStyle);
+					if(!(indexOfFirstNonStoreCell == columnNameMap.get("Business Date"))) {
+						CellStyle nonStoreStyle = createNonStoreCellStyle(color);
+						currentRow.getCell(indexOfFirstNonStoreCell).setCellStyle(nonStoreStyle);
+					} else {
+						CellStyle businessDateStyle = createBusinessDateCellStyle(color);
+						currentRow.getCell(indexOfFirstNonStoreCell).setCellStyle(businessDateStyle);
+					}
+					
 				} else {					
 					CellStyle tipPercentageStyle = createTipPercentageCellStyle(color);
 					currentRow.getCell(indexOfFirstNonStoreCell).setCellStyle(tipPercentageStyle);
@@ -169,6 +200,16 @@ public class TipExceptionService {
 		CellStyle style = workbook.createCellStyle();
 		style.setFillForegroundColor(color.getIndex());
 		style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+		return style;
+	}
+	
+	private CellStyle createBusinessDateCellStyle(IndexedColors color) {
+		CellStyle style = workbook.createCellStyle();
+		CreationHelper helper = workbook.getCreationHelper();
+		style.setDataFormat(helper.createDataFormat().getFormat("mm/dd/yyyy"));
+		style.setFillForegroundColor(color.getIndex());
+		style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+		style.setAlignment(HorizontalAlignment.CENTER);
 		return style;
 	}
 	

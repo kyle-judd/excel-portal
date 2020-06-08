@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 
@@ -59,4 +60,45 @@ public class ExcelUtilityHelper {
 			}
 		}
 	}
+	
+	public static void deleteColumn(Sheet sheet, int columnToDelete) {
+	    for (int indexOfRow = 0; indexOfRow < sheet.getPhysicalNumberOfRows(); indexOfRow++) {
+	        Row currentRow = sheet.getRow(indexOfRow);
+	        for (int indexOfColumn = columnToDelete; indexOfColumn < currentRow.getPhysicalNumberOfCells(); indexOfColumn++) {
+	            Cell oldCell = currentRow.getCell(indexOfColumn);
+	            if (oldCell != null) {
+	                currentRow.removeCell(oldCell);
+	            }
+	            Cell nextCell = currentRow.getCell(indexOfColumn + 1);
+	            if (nextCell != null) {
+	                Cell newCell = currentRow.createCell(indexOfColumn, nextCell.getCellType());
+	                cloneCell(newCell, nextCell);
+	                //Set the column width only on the first row.
+	                //Other wise the second row will overwrite the original column width set previously.
+	                if(indexOfRow == 0) {
+	                    sheet.setColumnWidth(indexOfColumn, sheet.getColumnWidth(indexOfColumn + 1));
+
+	                }
+	            }
+	        }
+	    }
+	}
+
+	private static void cloneCell(Cell newCell, Cell oldCell) {
+	    newCell.setCellComment(oldCell.getCellComment());
+	    newCell.setCellStyle(oldCell.getCellStyle());
+
+	    if (CellType.BOOLEAN == newCell.getCellType()) {
+	        newCell.setCellValue(oldCell.getBooleanCellValue());
+	    } else if (CellType.NUMERIC == newCell.getCellType()) {
+	        newCell.setCellValue(oldCell.getNumericCellValue());
+	    } else if (CellType.STRING == newCell.getCellType()) {
+	        newCell.setCellValue(oldCell.getStringCellValue());
+	    } else if (CellType.ERROR == newCell.getCellType()) {
+	        newCell.setCellValue(oldCell.getErrorCellValue());
+	    } else if (CellType.FORMULA == newCell.getCellType()) {
+	        newCell.setCellValue(oldCell.getCellFormula());
+	    }
+	}
+
 }
