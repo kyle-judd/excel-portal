@@ -19,6 +19,7 @@ import java.util.stream.IntStream;
 import javax.persistence.Column;
 
 import org.apache.poi.common.usermodel.HyperlinkType;
+import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.CellType;
@@ -28,6 +29,7 @@ import org.apache.poi.ss.usermodel.CreationHelper;
 import org.apache.poi.ss.usermodel.DataFormat;
 import org.apache.poi.ss.usermodel.ExtendedColor;
 import org.apache.poi.ss.usermodel.FillPatternType;
+import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.ss.usermodel.FormulaEvaluator;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.apache.poi.ss.usermodel.Hyperlink;
@@ -67,11 +69,11 @@ public class TipExceptionService {
 			
 			Sheet sheet = workbook.getSheetAt(0);
 			
-			Row headerRow = sheet.getRow(3);
-			
 			ExcelUtilityHelper.insertNewColumnBefore(workbook, 0, 1);
 			
 			sheet.getRow(0).getCell(1).setCellValue("Area Coach");
+
+			Row headerRow = sheet.getRow(3);
 			
 			columnNameMap = ExcelUtilityHelper.mapColumnNamesToIndex(headerRow);
 			
@@ -134,37 +136,7 @@ public class TipExceptionService {
 			
 			setAreaCoachColumnValues(areaCoachMap, columnNameMap, sheet);
 			
-			int totalRowsAfterRemovingEmptyRows = sheet.getPhysicalNumberOfRows();
-			
-			for(int indexOfRow = 0; indexOfRow < totalRowsAfterRemovingEmptyRows; indexOfRow++) {
-				
-				Row currentRow = sheet.getRow(indexOfRow);
-				
-				if(currentRow.getRowNum() == 0) {
-					
-					CellStyle style = workbook.createCellStyle();
-					
-					style.setAlignment(HorizontalAlignment.CENTER);
-					//style.setbo
-					
-					for(int cellIndex = 0; cellIndex < currentRow.getPhysicalNumberOfCells(); cellIndex++) {
-						
-						currentRow.getCell(cellIndex).setCellStyle(style);
-						
-					};
-					
-					continue;
-				}
-				
-				int indexOfTipColumn = columnNameMap.get("Tip");
-				
-				Cell tipCell = currentRow.getCell(indexOfTipColumn);
-				
-				double tipValue = tipCell.getNumericCellValue();
-
-				styleCells(currentRow, tipValue, columnNameMap);
-				
-			}
+			styleCells(sheet, columnNameMap);
 			
 			for(int i = 0; i < 4; i++) {
 				
@@ -190,77 +162,98 @@ public class TipExceptionService {
 		return new ByteArrayInputStream(outputStream.toByteArray());
 	}
 	
-	private void styleCells(Row currentRow, double tipValue, Map<String, Integer> columnNameMap) {
+	private void styleCells(Sheet sheet, Map<String, Integer> columnNameMap) {
 		
-		LOGGER.warn(columnNameMap);
-		
-		if(tipValue >= 10 && tipValue < 20) {
+		for(int indexOfRow = 0; indexOfRow < sheet.getPhysicalNumberOfRows(); indexOfRow++) {
 			
-			IndexedColors color = IndexedColors.PALE_BLUE;
+			Row currentRow = sheet.getRow(indexOfRow);
 			
-			CellStyle storeStyle = createStoreCellStyle(color);
-			
-			currentRow.getCell(0).setCellStyle(storeStyle);
-			
-			for(int indexOfFirstNonStoreCell = 1; indexOfFirstNonStoreCell < currentRow.getPhysicalNumberOfCells(); indexOfFirstNonStoreCell++) {
-			
-				if(!(indexOfFirstNonStoreCell == columnNameMap.get("Tip Pct"))) {
+			if(currentRow.getRowNum() == 0) {
 				
-					if(!(indexOfFirstNonStoreCell == columnNameMap.get("Business Date"))) {
+				for(int cellIndex = 0; cellIndex < currentRow.getPhysicalNumberOfCells(); cellIndex++) {
+
+					currentRow.getCell(cellIndex).setCellStyle(createHeaderStyle());
 					
-						CellStyle nonStoreStyle = createNonStoreCellStyle(color);
-						
-						currentRow.getCell(indexOfFirstNonStoreCell).setCellStyle(nonStoreStyle);
-					
-					} else {
-					
-						CellStyle businessDateStyle = createBusinessDateCellStyle(color);
-						
-						currentRow.getCell(indexOfFirstNonStoreCell).setCellStyle(businessDateStyle);
-					}
-					
-				} else {					
-					
-					CellStyle tipPercentageStyle = createTipPercentageCellStyle(color);
-					
-					currentRow.getCell(indexOfFirstNonStoreCell).setCellStyle(tipPercentageStyle);
-				}			
+				}
+				
+				continue;
 			}
 			
-		} else {
+			int indexOfTipColumn = columnNameMap.get("Tip");
 			
+			Cell tipCell = currentRow.getCell(indexOfTipColumn);
 			
-			IndexedColors color = IndexedColors.YELLOW;
+			double tipValue = tipCell.getNumericCellValue();
 			
-			CellStyle storeStyle = createStoreCellStyle(color);
-			
-			currentRow.getCell(0).setCellStyle(storeStyle);
-			
-			for(int indexOfFirstNonStoreCell = 1; indexOfFirstNonStoreCell < currentRow.getPhysicalNumberOfCells(); indexOfFirstNonStoreCell++) {
-			
-				if(!(indexOfFirstNonStoreCell == columnNameMap.get("Tip Pct"))) {
+			if(tipValue >= 10 && tipValue < 20) {
 				
-					if(!(indexOfFirstNonStoreCell == columnNameMap.get("Business Date"))) {
+				IndexedColors color = IndexedColors.PALE_BLUE;
+				
+				CellStyle storeStyle = createStoreCellStyle(color);
+				
+				currentRow.getCell(0).setCellStyle(storeStyle);
+				
+				for(int indexOfFirstNonStoreCell = 1; indexOfFirstNonStoreCell < currentRow.getPhysicalNumberOfCells(); indexOfFirstNonStoreCell++) {
+				
+					if(!(indexOfFirstNonStoreCell == columnNameMap.get("Tip Pct"))) {
 					
-						CellStyle nonStoreStyle = createNonStoreCellStyle(color);
+						if(!(indexOfFirstNonStoreCell == columnNameMap.get("Business Date"))) {
 						
-						currentRow.getCell(indexOfFirstNonStoreCell).setCellStyle(nonStoreStyle);
-					
-					} else {
-					
-						CellStyle businessDateStyle = createBusinessDateCellStyle(color);
+							CellStyle nonStoreStyle = createNonStoreCellStyle(color);
+							
+							currentRow.getCell(indexOfFirstNonStoreCell).setCellStyle(nonStoreStyle);
 						
-						currentRow.getCell(indexOfFirstNonStoreCell).setCellStyle(businessDateStyle);
-					}
+						} else {
+						
+							CellStyle businessDateStyle = createBusinessDateCellStyle(color);
+							
+							currentRow.getCell(indexOfFirstNonStoreCell).setCellStyle(businessDateStyle);
+						}
+						
+					} else {					
+						
+						CellStyle tipPercentageStyle = createTipPercentageCellStyle(color);
+						
+						currentRow.getCell(indexOfFirstNonStoreCell).setCellStyle(tipPercentageStyle);
+					}			
+				}
+				
+			} else {
+				
+				IndexedColors color = IndexedColors.YELLOW;
+				
+				CellStyle storeStyle = createStoreCellStyle(color);
+				
+				currentRow.getCell(0).setCellStyle(storeStyle);
+				
+				for(int indexOfFirstNonStoreCell = 1; indexOfFirstNonStoreCell < currentRow.getPhysicalNumberOfCells(); indexOfFirstNonStoreCell++) {
+				
+					if(!(indexOfFirstNonStoreCell == columnNameMap.get("Tip Pct"))) {
 					
-				} else {					
-					
-					CellStyle tipPercentageStyle = createTipPercentageCellStyle(color);
-					
-					currentRow.getCell(indexOfFirstNonStoreCell).setCellStyle(tipPercentageStyle);
-				}	
+						if(!(indexOfFirstNonStoreCell == columnNameMap.get("Business Date"))) {
+						
+							CellStyle nonStoreStyle = createNonStoreCellStyle(color);
+							
+							currentRow.getCell(indexOfFirstNonStoreCell).setCellStyle(nonStoreStyle);
+						
+						} else {
+						
+							CellStyle businessDateStyle = createBusinessDateCellStyle(color);
+							
+							currentRow.getCell(indexOfFirstNonStoreCell).setCellStyle(businessDateStyle);
+						}
+						
+					} else {					
+						
+						CellStyle tipPercentageStyle = createTipPercentageCellStyle(color);
+						
+						currentRow.getCell(indexOfFirstNonStoreCell).setCellStyle(tipPercentageStyle);
+					}	
+				}
 			}
 		}
+		
+		
 	}
 	
 	private CellStyle createStoreCellStyle(IndexedColors color) {
@@ -323,7 +316,17 @@ public class TipExceptionService {
 		
 		CellStyle style = workbook.createCellStyle();
 		
+		Font font = workbook.createFont();
+		
+		font.setFontHeightInPoints((short) 15);
+		
+		font.setBold(true);
+		
+		style.setFont(font);
+		
 		style.setAlignment(HorizontalAlignment.CENTER);
+		
+		style.setBorderBottom(BorderStyle.MEDIUM);
 		
 		return style;
 	}
