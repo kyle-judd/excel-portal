@@ -43,6 +43,7 @@ import org.apache.poi.ss.util.CellReference;
 import org.apache.poi.xssf.usermodel.XSSFFont;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.jboss.logging.Logger;
+import org.jboss.logging.Logger.Level;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -70,8 +71,6 @@ public class TipExceptionService {
 			Sheet sheet = workbook.getSheetAt(0);
 			
 			ExcelUtilityHelper.insertNewColumnBefore(workbook, 0, 1);
-			
-			sheet.getRow(0).getCell(1).setCellValue("Area Coach");
 
 			Row headerRow = sheet.getRow(3);
 			
@@ -164,6 +163,10 @@ public class TipExceptionService {
 	
 	private void styleCells(Sheet sheet, Map<String, Integer> columnNameMap) {
 		
+		String currentAreaCoach;
+		
+		String nextAreaCoach;
+		
 		for(int indexOfRow = 0; indexOfRow < sheet.getPhysicalNumberOfRows(); indexOfRow++) {
 			
 			Row currentRow = sheet.getRow(indexOfRow);
@@ -171,6 +174,8 @@ public class TipExceptionService {
 			if(currentRow.getRowNum() == 0) {
 				
 				for(int cellIndex = 0; cellIndex < currentRow.getPhysicalNumberOfCells(); cellIndex++) {
+					
+					currentRow.getCell(1).setCellValue("Area Coach");
 
 					currentRow.getCell(cellIndex).setCellStyle(createHeaderStyle());
 					
@@ -178,6 +183,24 @@ public class TipExceptionService {
 				
 				continue;
 			}
+			
+			currentAreaCoach = currentRow.getCell(1).getStringCellValue();
+			
+			int nextAreaCoachIndex;
+			
+			if(indexOfRow == sheet.getPhysicalNumberOfRows() - 1) {
+				
+				nextAreaCoachIndex = indexOfRow;
+				
+			} else {
+				
+				nextAreaCoachIndex = indexOfRow + 1;
+				
+			}
+			
+			nextAreaCoach = sheet.getRow(nextAreaCoachIndex).getCell(1).getStringCellValue();
+			
+			LOGGER.log(Level.INFO, nextAreaCoach);
 			
 			int indexOfTipColumn = columnNameMap.get("Tip");
 			
@@ -191,6 +214,11 @@ public class TipExceptionService {
 				
 				CellStyle storeStyle = createStoreCellStyle(color);
 				
+				if(!currentAreaCoach.equals(nextAreaCoach)) {
+					
+					storeStyle.setBorderBottom(BorderStyle.MEDIUM);
+				}
+				
 				currentRow.getCell(0).setCellStyle(storeStyle);
 				
 				for(int indexOfFirstNonStoreCell = 1; indexOfFirstNonStoreCell < currentRow.getPhysicalNumberOfCells(); indexOfFirstNonStoreCell++) {
@@ -201,11 +229,21 @@ public class TipExceptionService {
 						
 							CellStyle nonStoreStyle = createNonStoreCellStyle(color);
 							
+							if(!currentAreaCoach.equals(nextAreaCoach)) {
+								
+								nonStoreStyle.setBorderBottom(BorderStyle.MEDIUM);
+							}
+							
 							currentRow.getCell(indexOfFirstNonStoreCell).setCellStyle(nonStoreStyle);
 						
 						} else {
 						
 							CellStyle businessDateStyle = createBusinessDateCellStyle(color);
+							
+							if(!currentAreaCoach.equals(nextAreaCoach)) {
+								
+								businessDateStyle.setBorderBottom(BorderStyle.MEDIUM);
+							}
 							
 							currentRow.getCell(indexOfFirstNonStoreCell).setCellStyle(businessDateStyle);
 						}
@@ -213,6 +251,11 @@ public class TipExceptionService {
 					} else {					
 						
 						CellStyle tipPercentageStyle = createTipPercentageCellStyle(color);
+						
+						if(!currentAreaCoach.equals(nextAreaCoach)) {
+							
+							tipPercentageStyle.setBorderBottom(BorderStyle.MEDIUM);
+						}
 						
 						currentRow.getCell(indexOfFirstNonStoreCell).setCellStyle(tipPercentageStyle);
 					}			
@@ -224,6 +267,12 @@ public class TipExceptionService {
 				
 				CellStyle storeStyle = createStoreCellStyle(color);
 				
+				if(!currentAreaCoach.equals(nextAreaCoach)) {
+					
+					storeStyle.setBorderBottom(BorderStyle.MEDIUM);
+					
+				}
+				
 				currentRow.getCell(0).setCellStyle(storeStyle);
 				
 				for(int indexOfFirstNonStoreCell = 1; indexOfFirstNonStoreCell < currentRow.getPhysicalNumberOfCells(); indexOfFirstNonStoreCell++) {
@@ -234,11 +283,22 @@ public class TipExceptionService {
 						
 							CellStyle nonStoreStyle = createNonStoreCellStyle(color);
 							
+							if(!currentAreaCoach.equals(nextAreaCoach)) {
+								
+								nonStoreStyle.setBorderBottom(BorderStyle.MEDIUM);
+								
+							}
+							
 							currentRow.getCell(indexOfFirstNonStoreCell).setCellStyle(nonStoreStyle);
 						
 						} else {
 						
 							CellStyle businessDateStyle = createBusinessDateCellStyle(color);
+							
+							if(!currentAreaCoach.equals(nextAreaCoach)) {
+								
+								businessDateStyle.setBorderBottom(BorderStyle.MEDIUM);
+							}
 							
 							currentRow.getCell(indexOfFirstNonStoreCell).setCellStyle(businessDateStyle);
 						}
@@ -246,6 +306,12 @@ public class TipExceptionService {
 					} else {					
 						
 						CellStyle tipPercentageStyle = createTipPercentageCellStyle(color);
+						
+						if(!currentAreaCoach.equals(nextAreaCoach)) {
+							
+							tipPercentageStyle.setBorderBottom(BorderStyle.MEDIUM);
+							
+						}
 						
 						currentRow.getCell(indexOfFirstNonStoreCell).setCellStyle(tipPercentageStyle);
 					}	
@@ -318,7 +384,7 @@ public class TipExceptionService {
 		
 		Font font = workbook.createFont();
 		
-		font.setFontHeightInPoints((short) 15);
+		font.setFontHeightInPoints((short) 11);
 		
 		font.setBold(true);
 		
