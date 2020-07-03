@@ -176,8 +176,21 @@ public class TipExceptionService {
 				for(int cellIndex = 0; cellIndex < currentRow.getPhysicalNumberOfCells(); cellIndex++) {
 					
 					currentRow.getCell(1).setCellValue("Area Coach");
+					
+					CellStyle headerStyle = createHeaderStyle();
+					
+					if(cellIndex == 0) {
+						
+						headerStyle.setBorderLeft(BorderStyle.MEDIUM);
+					}
+					
+					if(cellIndex == currentRow.getPhysicalNumberOfCells() - 1) {
+						
+						headerStyle.setBorderRight(BorderStyle.MEDIUM);
+						
+					}
 
-					currentRow.getCell(cellIndex).setCellStyle(createHeaderStyle());
+					currentRow.getCell(cellIndex).setCellStyle(headerStyle);
 					
 				}
 				
@@ -326,6 +339,8 @@ public class TipExceptionService {
 		
 		CellStyle style = workbook.createCellStyle();
 		
+		style.setBorderLeft(BorderStyle.MEDIUM);
+		
 		style.setFillForegroundColor(color.getIndex());
 		
 		style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
@@ -366,6 +381,8 @@ public class TipExceptionService {
 	private CellStyle createTipPercentageCellStyle(IndexedColors color) {
 		
 		CellStyle style = workbook.createCellStyle();
+		
+		style.setBorderRight(BorderStyle.MEDIUM);
 		
 		style.setFillForegroundColor(color.getIndex());
 		
