@@ -2,12 +2,19 @@ package com.excelportal.service;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap.KeySetView;
+import java.util.stream.IntStream;
 
 import javax.persistence.Column;
 
@@ -31,6 +38,7 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.VerticalAlignment;
 import org.apache.poi.ss.util.AreaReference;
 import org.apache.poi.ss.util.CellReference;
+import org.apache.poi.xssf.usermodel.XSSFFont;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.jboss.logging.Logger;
 import org.springframework.stereotype.Service;
@@ -43,59 +51,62 @@ import ch.qos.logback.classic.db.names.ColumnName;
 @Service
 public class TipExceptionService {
 	
-	// highlight yellow if $20 or more and greater than 50% of the ticket
-	
-	// hightlight blue if $10 > or more and greater than 100% of the ticket
-	
-	// add area coach
-	
-	// sort by area coach
-	
-	// then sort by store
-	
 	private XSSFWorkbook workbook;
 	
 	private final Logger LOGGER = Logger.getLogger(this.getClass());
 	
 	public ByteArrayInputStream parseTipException(MultipartFile tipExceptionReport) throws IOException {
 		
+		Map<String, Integer> columnNameMap;
 		
-		Map<String, Integer> columnNameMap = new HashMap<>();
+		Map<String, List<String>> areaCoachMap;
 		
 		try {
-			// read multipart file into workbook
+			
 			workbook = new XSSFWorkbook(tipExceptionReport.getInputStream());
 			
-			// tip exception just has one sheet
 			Sheet sheet = workbook.getSheetAt(0);
 			
-			// row where column headers are located
 			Row headerRow = sheet.getRow(3);
 			
-			// map the column header string to their indexes for easy reference
+			ExcelUtilityHelper.insertNewColumnBefore(workbook, 0, 1);
+			
+			sheet.getRow(0).getCell(1).setCellValue("Area Coach");
+			
 			columnNameMap = ExcelUtilityHelper.mapColumnNamesToIndex(headerRow);
 			
-			// total rows to loop through
+			areaCoachMap = getAreaCoachMap(columnNameMap, sheet);
+
 			int totalRows = sheet.getPhysicalNumberOfRows();
 			
-			for(int indexOfRow = 5; indexOfRow < totalRows; indexOfRow++) {
+			for(int indexOfRow = 4; indexOfRow < totalRows; indexOfRow++) {
 				
 				Row currentRow = sheet.getRow(indexOfRow);
 								
+				if(currentRow.getRowNum() == 4) {
+		
+					sheet.removeRow(currentRow);
+					
+					continue;
+				}
+				
 				int indexOfTipColumn = columnNameMap.get("Tip");
 				
 				Cell tipCell = currentRow.getCell(indexOfTipColumn);
 				
-				// look for a better way to do this
 				if(tipCell.getCellType() == CellType.STRING) {
+					
 					sheet.removeRow(currentRow);
+					
 					continue;
 				}
 				
 				double tipValue = tipCell.getNumericCellValue();
 	
 				if(tipValue < 10) {
+					
 					sheet.removeRow(currentRow);
+					
 					continue;
 				}
 
@@ -106,27 +117,44 @@ public class TipExceptionService {
 				double tipPercent = tipPercentCell.getNumericCellValue();
 				
 				if((tipValue >= 20 && tipPercent < 0.5) || ((tipValue >= 10 && tipValue < 20) && tipPercent < 1)) {
+					
 					sheet.removeRow(currentRow);
+					
 				}
 
 			}
 			
-			// remove title rows
 			for(int indexOfRow = 0; indexOfRow < 3; indexOfRow++) {
+
 				sheet.removeRow(sheet.getRow(indexOfRow));
+				
 			}
 			
-			// remove the empty rows
 			ExcelUtilityHelper.removeEmptyRows(sheet);
 			
-			int totalRowsAfterRemovingEmptyRows = sheet.getPhysicalNumberOfRows();		
+			setAreaCoachColumnValues(areaCoachMap, columnNameMap, sheet);
 			
-			// styles all the cells accordingly
-			for(int indexOfRow = 2; indexOfRow < totalRowsAfterRemovingEmptyRows; indexOfRow++) {
+			int totalRowsAfterRemovingEmptyRows = sheet.getPhysicalNumberOfRows();
+			
+			for(int indexOfRow = 0; indexOfRow < totalRowsAfterRemovingEmptyRows; indexOfRow++) {
 				
 				Row currentRow = sheet.getRow(indexOfRow);
 				
-				LOGGER.warn("BEFORE STYLING BUSINESS DATE =====> " + currentRow.getCell(columnNameMap.get("Business Date")).getNumericCellValue());
+				if(currentRow.getRowNum() == 0) {
+					
+					CellStyle style = workbook.createCellStyle();
+					
+					style.setAlignment(HorizontalAlignment.CENTER);
+					//style.setbo
+					
+					for(int cellIndex = 0; cellIndex < currentRow.getPhysicalNumberOfCells(); cellIndex++) {
+						
+						currentRow.getCell(cellIndex).setCellStyle(style);
+						
+					};
+					
+					continue;
+				}
 				
 				int indexOfTipColumn = columnNameMap.get("Tip");
 				
@@ -139,57 +167,96 @@ public class TipExceptionService {
 			}
 			
 			for(int i = 0; i < 4; i++) {
+				
 				for(int indexOfColumnToBeDeleted = columnNameMap.get("Card Type"); indexOfColumnToBeDeleted < sheet.getRow(0).getPhysicalNumberOfCells(); indexOfColumnToBeDeleted++) {
+					
 					ExcelUtilityHelper.deleteColumn(sheet, indexOfColumnToBeDeleted);
+					
 				}
 			}
 			
-		} catch(Exception e) {
+			
+			IntStream.range(0, sheet.getRow(0).getPhysicalNumberOfCells()).forEach(columnIndex -> sheet.autoSizeColumn(columnIndex));
+	
+			
+		} catch(IOException e) {
 			e.printStackTrace();
 		}
 		
 		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+		
 		workbook.write(outputStream);
+		
 		return new ByteArrayInputStream(outputStream.toByteArray());
 	}
 	
 	private void styleCells(Row currentRow, double tipValue, Map<String, Integer> columnNameMap) {
+		
+		LOGGER.warn(columnNameMap);
+		
 		if(tipValue >= 10 && tipValue < 20) {
+			
 			IndexedColors color = IndexedColors.PALE_BLUE;
+			
 			CellStyle storeStyle = createStoreCellStyle(color);
+			
 			currentRow.getCell(0).setCellStyle(storeStyle);
+			
 			for(int indexOfFirstNonStoreCell = 1; indexOfFirstNonStoreCell < currentRow.getPhysicalNumberOfCells(); indexOfFirstNonStoreCell++) {
+			
 				if(!(indexOfFirstNonStoreCell == columnNameMap.get("Tip Pct"))) {
+				
 					if(!(indexOfFirstNonStoreCell == columnNameMap.get("Business Date"))) {
+					
 						CellStyle nonStoreStyle = createNonStoreCellStyle(color);
+						
 						currentRow.getCell(indexOfFirstNonStoreCell).setCellStyle(nonStoreStyle);
+					
 					} else {
+					
 						CellStyle businessDateStyle = createBusinessDateCellStyle(color);
+						
 						currentRow.getCell(indexOfFirstNonStoreCell).setCellStyle(businessDateStyle);
 					}
 					
 				} else {					
+					
 					CellStyle tipPercentageStyle = createTipPercentageCellStyle(color);
+					
 					currentRow.getCell(indexOfFirstNonStoreCell).setCellStyle(tipPercentageStyle);
 				}			
 			}
 			
 		} else {
+			
+			
 			IndexedColors color = IndexedColors.YELLOW;
+			
 			CellStyle storeStyle = createStoreCellStyle(color);
+			
 			currentRow.getCell(0).setCellStyle(storeStyle);
+			
 			for(int indexOfFirstNonStoreCell = 1; indexOfFirstNonStoreCell < currentRow.getPhysicalNumberOfCells(); indexOfFirstNonStoreCell++) {
+			
 				if(!(indexOfFirstNonStoreCell == columnNameMap.get("Tip Pct"))) {
+				
 					if(!(indexOfFirstNonStoreCell == columnNameMap.get("Business Date"))) {
+					
 						CellStyle nonStoreStyle = createNonStoreCellStyle(color);
+						
 						currentRow.getCell(indexOfFirstNonStoreCell).setCellStyle(nonStoreStyle);
+					
 					} else {
+					
 						CellStyle businessDateStyle = createBusinessDateCellStyle(color);
+						
 						currentRow.getCell(indexOfFirstNonStoreCell).setCellStyle(businessDateStyle);
 					}
 					
 				} else {					
+					
 					CellStyle tipPercentageStyle = createTipPercentageCellStyle(color);
+					
 					currentRow.getCell(indexOfFirstNonStoreCell).setCellStyle(tipPercentageStyle);
 				}	
 			}
@@ -197,37 +264,160 @@ public class TipExceptionService {
 	}
 	
 	private CellStyle createStoreCellStyle(IndexedColors color) {
+		
 		CellStyle style = workbook.createCellStyle();
+		
 		style.setFillForegroundColor(color.getIndex());
+		
 		style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+		
 		return style;
 	}
 	
 	private CellStyle createBusinessDateCellStyle(IndexedColors color) {
+		
 		CellStyle style = workbook.createCellStyle();
+		
 		CreationHelper helper = workbook.getCreationHelper();
+		
 		style.setDataFormat(helper.createDataFormat().getFormat("mm/dd/yyyy"));
+		
 		style.setFillForegroundColor(color.getIndex());
+		
 		style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+		
 		style.setAlignment(HorizontalAlignment.CENTER);
+		
 		return style;
 	}
 	
 	private CellStyle createNonStoreCellStyle(IndexedColors color) {
+		
 		CellStyle style = workbook.createCellStyle();
+		
 		style.setFillForegroundColor(color.getIndex());
+		
 		style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+		
 		style.setAlignment(HorizontalAlignment.CENTER);
+		
 		return style;
 	}
 	
 	private CellStyle createTipPercentageCellStyle(IndexedColors color) {
+		
 		CellStyle style = workbook.createCellStyle();
+		
 		style.setFillForegroundColor(color.getIndex());
+		
 		style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+		
 		style.setAlignment(HorizontalAlignment.CENTER);
+		
 		style.setDataFormat(workbook.createDataFormat().getFormat("00.00%"));
+		
 		return style;
+	}
+	
+	private CellStyle createHeaderStyle() {
+		
+		CellStyle style = workbook.createCellStyle();
+		
+		style.setAlignment(HorizontalAlignment.CENTER);
+		
+		return style;
+	}
+	
+	private Map<String, List<String>> getAreaCoachMap(Map<String, Integer> columnNameMap, Sheet sheet) {
+		
+		Map<String, List<String>> coachStoreMap = new HashMap<>();
+		
+		int totalRows = sheet.getPhysicalNumberOfRows();
+		
+		Row firstAreaCoachRow = sheet.getRow(4);
+		
+		String areaCoachName = firstAreaCoachRow.getCell(columnNameMap.get("Store")).getStringCellValue();
+		
+		coachStoreMap.put(areaCoachName, new ArrayList<String>());
+		
+		for(int indexOfRow = 5; indexOfRow < totalRows; indexOfRow++) {
+		
+			Row currentRow = sheet.getRow(indexOfRow);
+			
+			Cell businessDateCell = currentRow.getCell(columnNameMap.get("Business Date"));
+			
+			if(businessDateCell.getCellType() == CellType.BLANK) {
+			
+				areaCoachName = currentRow.getCell(columnNameMap.get("Store")).getStringCellValue();
+				
+				coachStoreMap.put(areaCoachName, new ArrayList<String>());
+			}
+			
+			coachStoreMap.get(areaCoachName).add(currentRow.getCell(columnNameMap.get("Store")).getStringCellValue());
+		}
+		
+		return coachStoreMap;
+	}
+	
+	private void setAreaCoachColumnValues(Map<String, List<String>> areaCoachMap, Map<String, Integer> columnNameMap, Sheet sheet) {
+		
+		for(int indexOfRow = 1; indexOfRow < sheet.getPhysicalNumberOfRows(); indexOfRow++) {
+		
+			Row currentRow = sheet.getRow(indexOfRow);
+			
+			Cell storeCell = currentRow.getCell(columnNameMap.get("Store"));
+
+			for(Entry<String, List<String>> entrySet : areaCoachMap.entrySet()) {
+
+				if(entrySet.getValue().contains(storeCell.getStringCellValue())) {
+				
+					String nameKey = entrySet.getKey();
+					
+					if(nameKey.contains("Andre")) {
+						currentRow.getCell(1).setCellValue("Arlee");
+					
+					} else if(nameKey.contains("Hill")) {
+						currentRow.getCell(1).setCellValue("Hannah");
+					
+					} else if(nameKey.contains("Jordan")) {
+						currentRow.getCell(1).setCellValue("Harvey");
+					
+					} else if(nameKey.contains("Holden")) {
+						currentRow.getCell(1).setCellValue("Joe");
+					
+					} else if(nameKey.contains("Welsh")) {
+						currentRow.getCell(1).setCellValue("Jen");
+					
+					} else if(nameKey.contains("Johnson")) {
+						currentRow.getCell(1).setCellValue("Monica");
+					
+					} else if(nameKey.contains("Lewis")) {
+						currentRow.getCell(1).setCellValue("Michelle");
+					
+					} else if(nameKey.contains("Comer")) {
+						currentRow.getCell(1).setCellValue("Robert");
+					
+					} else if(nameKey.contains("Sanchez")) {
+						currentRow.getCell(1).setCellValue("Rachel");
+					
+					} else if(nameKey.contains("Traill")) {
+						currentRow.getCell(1).setCellValue("Rumone");
+					
+					} else if(nameKey.contains("Evans")) {
+						currentRow.getCell(1).setCellValue("Theresa");
+					
+					} else if(nameKey.contains("Shreve")) {
+						currentRow.getCell(1).setCellValue("Barbara");
+					
+					} else if(nameKey.contains("Hauert")) {
+						currentRow.getCell(1).setCellValue("Brandon");
+					
+					} else if(nameKey.contains("Berrios")) {
+						currentRow.getCell(1).setCellValue("Hector");
+					}
+				}
+			}
+		}
 	}
 
 }
