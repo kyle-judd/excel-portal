@@ -40,6 +40,8 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.VerticalAlignment;
 import org.apache.poi.ss.util.AreaReference;
 import org.apache.poi.ss.util.CellReference;
+import org.apache.poi.xssf.usermodel.XSSFCellStyle;
+import org.apache.poi.xssf.usermodel.XSSFColor;
 import org.apache.poi.xssf.usermodel.XSSFFont;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.jboss.logging.Logger;
@@ -223,9 +225,9 @@ public class TipExceptionService {
 			
 			if(tipValue >= 10 && tipValue < 20) {
 				
-				IndexedColors color = IndexedColors.PALE_BLUE;
+				IndexedColors color = IndexedColors.AQUA;
 				
-				CellStyle storeStyle = createStoreCellStyle(color);
+				CellStyle storeStyle = createStoreCellStyle();
 				
 				if(!currentAreaCoach.equals(nextAreaCoach)) {
 					
@@ -240,7 +242,7 @@ public class TipExceptionService {
 					
 						if(!(indexOfFirstNonStoreCell == columnNameMap.get("Business Date"))) {
 						
-							CellStyle nonStoreStyle = createNonStoreCellStyle(color);
+							CellStyle nonStoreStyle = createNonStoreCellStyle();
 							
 							if(!currentAreaCoach.equals(nextAreaCoach)) {
 								
@@ -251,7 +253,7 @@ public class TipExceptionService {
 						
 						} else {
 						
-							CellStyle businessDateStyle = createBusinessDateCellStyle(color);
+							CellStyle businessDateStyle = createBusinessDateCellStyle();
 							
 							if(!currentAreaCoach.equals(nextAreaCoach)) {
 								
@@ -263,7 +265,7 @@ public class TipExceptionService {
 						
 					} else {					
 						
-						CellStyle tipPercentageStyle = createTipPercentageCellStyle(color);
+						CellStyle tipPercentageStyle = createTipPercentageCellStyle();
 						
 						if(!currentAreaCoach.equals(nextAreaCoach)) {
 							
@@ -278,7 +280,9 @@ public class TipExceptionService {
 				
 				IndexedColors color = IndexedColors.YELLOW;
 				
-				CellStyle storeStyle = createStoreCellStyle(color);
+				CellStyle storeStyle = createStoreCellStyle();
+				
+				storeStyle.setFillForegroundColor(color.getIndex());
 				
 				if(!currentAreaCoach.equals(nextAreaCoach)) {
 					
@@ -294,7 +298,9 @@ public class TipExceptionService {
 					
 						if(!(indexOfFirstNonStoreCell == columnNameMap.get("Business Date"))) {
 						
-							CellStyle nonStoreStyle = createNonStoreCellStyle(color);
+							CellStyle nonStoreStyle = createNonStoreCellStyle();
+							
+							nonStoreStyle.setFillForegroundColor(color.getIndex());
 							
 							if(!currentAreaCoach.equals(nextAreaCoach)) {
 								
@@ -306,7 +312,9 @@ public class TipExceptionService {
 						
 						} else {
 						
-							CellStyle businessDateStyle = createBusinessDateCellStyle(color);
+							CellStyle businessDateStyle = createBusinessDateCellStyle();
+							
+							businessDateStyle.setFillForegroundColor(color.getIndex());
 							
 							if(!currentAreaCoach.equals(nextAreaCoach)) {
 								
@@ -318,7 +326,9 @@ public class TipExceptionService {
 						
 					} else {					
 						
-						CellStyle tipPercentageStyle = createTipPercentageCellStyle(color);
+						CellStyle tipPercentageStyle = createTipPercentageCellStyle();
+						
+						tipPercentageStyle.setFillForegroundColor(color.getIndex());
 						
 						if(!currentAreaCoach.equals(nextAreaCoach)) {
 							
@@ -335,20 +345,26 @@ public class TipExceptionService {
 		
 	}
 	
-	private CellStyle createStoreCellStyle(IndexedColors color) {
+	private CellStyle createStoreCellStyle() {
 		
 		CellStyle style = workbook.createCellStyle();
 		
 		style.setBorderLeft(BorderStyle.MEDIUM);
 		
-		style.setFillForegroundColor(color.getIndex());
-		
 		style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
 		
+		if (style instanceof XSSFCellStyle) {
+			   
+			 XSSFCellStyle xssfcellcolorstyle = (XSSFCellStyle) style;
+			   
+			 xssfcellcolorstyle.setFillForegroundColor(new XSSFColor(new java.awt.Color(56, 163, 237)));
+			 
+		}
+
 		return style;
 	}
 	
-	private CellStyle createBusinessDateCellStyle(IndexedColors color) {
+	private CellStyle createBusinessDateCellStyle() {
 		
 		CellStyle style = workbook.createCellStyle();
 		
@@ -356,41 +372,60 @@ public class TipExceptionService {
 		
 		style.setDataFormat(helper.createDataFormat().getFormat("mm/dd/yyyy"));
 		
-		style.setFillForegroundColor(color.getIndex());
-		
 		style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
 		
 		style.setAlignment(HorizontalAlignment.CENTER);
 		
+		if (style instanceof XSSFCellStyle) {
+			   
+			 XSSFCellStyle xssfcellcolorstyle = (XSSFCellStyle) style;
+			   
+			 xssfcellcolorstyle.setFillForegroundColor(new XSSFColor(new java.awt.Color(56, 163, 237)));
+			 
+		}
+		
 		return style;
 	}
 	
-	private CellStyle createNonStoreCellStyle(IndexedColors color) {
+	private CellStyle createNonStoreCellStyle() {
 		
 		CellStyle style = workbook.createCellStyle();
 		
-		style.setFillForegroundColor(color.getIndex());
-		
 		style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
 		
 		style.setAlignment(HorizontalAlignment.CENTER);
 		
+		if (style instanceof XSSFCellStyle) {
+			   
+			 XSSFCellStyle xssfcellcolorstyle = (XSSFCellStyle) style;
+			   
+			 xssfcellcolorstyle.setFillForegroundColor(new XSSFColor(new java.awt.Color(56, 163, 237)));
+			 
+		}
+		
 		return style;
 	}
 	
-	private CellStyle createTipPercentageCellStyle(IndexedColors color) {
+	private CellStyle createTipPercentageCellStyle() {
 		
 		CellStyle style = workbook.createCellStyle();
 		
 		style.setBorderRight(BorderStyle.MEDIUM);
-		
-		style.setFillForegroundColor(color.getIndex());
 		
 		style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
 		
 		style.setAlignment(HorizontalAlignment.CENTER);
 		
 		style.setDataFormat(workbook.createDataFormat().getFormat("00.00%"));
+		
+		if (style instanceof XSSFCellStyle) {
+			   
+			 XSSFCellStyle xssfcellcolorstyle = (XSSFCellStyle) style;
+			   
+			 xssfcellcolorstyle.setFillForegroundColor(new XSSFColor(new java.awt.Color(56, 163, 237)));
+			 
+		}
+		
 		
 		return style;
 	}
@@ -484,7 +519,7 @@ public class TipExceptionService {
 						currentRow.getCell(1).setCellValue("Robert");
 					
 					} else if(nameKey.contains("Sanchez")) {
-						currentRow.getCell(1).setCellValue("Rachel");
+						currentRow.getCell(1).setCellValue("Rachael");
 					
 					} else if(nameKey.contains("Traill")) {
 						currentRow.getCell(1).setCellValue("Rumone");
