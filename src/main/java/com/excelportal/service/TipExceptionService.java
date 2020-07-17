@@ -137,9 +137,9 @@ public class TipExceptionService {
 
 			setAreaCoachColumnValues(areaCoachMap, columnNameMap, sheet);
 
-			ExcelUtilityHelper.sortSheet(workbook, sheet);
+			ExcelUtilityHelper.sortSheet(workbook, sheet, columnNameMap);
 
-			// styleCells(sheet, columnNameMap);
+			styleCells(sheet, columnNameMap);
 
 			for (int i = 0; i < 4; i++) {
 

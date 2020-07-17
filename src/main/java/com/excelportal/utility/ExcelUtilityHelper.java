@@ -71,12 +71,12 @@ public class ExcelUtilityHelper {
 		}
 	}
 	
-	private static void removeRows(Sheet sheet) {
+	/* private static void removeRows(Sheet sheet) {
 
 		for (int i = 1; i < sheet.getPhysicalNumberOfRows(); i++) {
 			sheet.removeRow(sheet.getRow(i));
 		}
-	}
+	}*/
 
 	public static void removeEmptyRows(Sheet sheet) {
 
@@ -301,33 +301,63 @@ public class ExcelUtilityHelper {
 
 	}
 	
-	public static void sortSheet(Workbook workbook, Sheet sheet) {
-		
+	public static void sortSheet(Workbook workbook, Sheet sheet, Map<String, Integer> columnNameMap) {
+
 		List<Row> rows = Lists.newArrayList(sheet.rowIterator());
+
+		int indexOfAreaCoachColumn = 1;
+
+		int indexOfStoreColumn = columnNameMap.get("Store");
+
+		rows.sort((row1, row2) -> {
+
+			if (row1.getCell(indexOfAreaCoachColumn).getStringCellValue()
+					.equals(row2.getCell(indexOfAreaCoachColumn).getStringCellValue())) {
+
+				return row1.getCell(indexOfStoreColumn).getStringCellValue()
+						.compareTo(row2.getCell(indexOfStoreColumn).getStringCellValue());
+
+			} else {
+
+				return row1.getCell(indexOfAreaCoachColumn).getStringCellValue()
+						.compareTo(row2.getCell(indexOfAreaCoachColumn).getStringCellValue());
+
+			}
+		});
 		
-		rows.sort((row1, row2) -> row1.getCell(1).getStringCellValue().compareTo(row2.getCell(1).getStringCellValue()));
+		/* rows.forEach(row -> LOGGER.warn("AFTER SORTING ---> " + row.getCell(0).getStringCellValue()));
 		
-		removeRows(sheet);
+		   rows.forEach(row -> LOGGER.warn("AFTER SORTING ---> " + row.getCell(1).getStringCellValue()));
+
+			removeRows(sheet);
+			
+			rows.forEach(row -> LOGGER.warn("AFTER removeRows() method ---> " + row.getCell(0).getStringCellValue()));
+			
+			rows.forEach(row -> LOGGER.warn("AFTER removeRows() method ---> " + row.getCell(1).getStringCellValue()));
 		
+		*/
+
 		for (int i = 1; i < rows.size(); i++) {
-			
-			rows.forEach(row -> row.forEach(cell -> LOGGER.info("IN LOOP OF CLONING CELLS ----> " + cell.toString())));
-			
-			Row newRow = sheet.createRow(i);
-			
+
+			// rows.forEach(row -> row.forEach(cell -> LOGGER.info("IN LOOP OF CLONING CELLS ----> " + cell.toString())));
+
+			Row rowToOverwrite = sheet.getRow(i);
+
 			Row sortedRow = rows.get(i);
 			
+			// sortedRow.forEach(cell -> LOGGER.warn("SORTED ROW IN LOOP " + cell.toString()));
+
 			for (int j = 0; j < sortedRow.getPhysicalNumberOfCells(); j++) {
-				
-				Cell oldCell = sortedRow.getCell(j);
-				
-				LOGGER.info("Old cell is ->>>>> " + oldCell.toString());
-				
-				Cell newCell = newRow.createCell(j);
-		
-				cloneCell(newCell, oldCell);
-				
-				LOGGER.info("New cell after cloning is ->>>>>> " + newCell.toString());
+
+				Cell cellToOverwrite = rowToOverwrite.getCell(j);
+
+				// LOGGER.info("Old cell is ->>>>> " + oldCell.toString());
+
+				Cell sortedCell = sortedRow.getCell(j);
+
+				cloneCell(cellToOverwrite, sortedCell);
+
+				// LOGGER.info("New cell after cloning is ->>>>>> " + newCell.toString());
 			}
 		}
 	}
