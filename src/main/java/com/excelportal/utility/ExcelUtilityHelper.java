@@ -303,7 +303,12 @@ public class ExcelUtilityHelper {
 	
 	public static void sortSheet(Workbook workbook, Sheet sheet, Map<String, Integer> columnNameMap) {
 
-		List<Row> rows = Lists.newArrayList(sheet.rowIterator());
+		List<Row> rows = new ArrayList<>();
+		
+		for (int i = 1; i < sheet.getPhysicalNumberOfRows(); i++) {
+			
+			rows.add(sheet.getRow(i));
+		}
 
 		int indexOfAreaCoachColumn = 1;
 
@@ -325,19 +330,15 @@ public class ExcelUtilityHelper {
 			}
 		});
 		
-		/* rows.forEach(row -> LOGGER.warn("AFTER SORTING ---> " + row.getCell(0).getStringCellValue()));
-		
-		   rows.forEach(row -> LOGGER.warn("AFTER SORTING ---> " + row.getCell(1).getStringCellValue()));
-
-			removeRows(sheet);
-			
-			rows.forEach(row -> LOGGER.warn("AFTER removeRows() method ---> " + row.getCell(0).getStringCellValue()));
-			
-			rows.forEach(row -> LOGGER.warn("AFTER removeRows() method ---> " + row.getCell(1).getStringCellValue()));
-		
-		*/
+		for (Row row : rows) {
+			row.forEach(cell -> LOGGER.warn("CHECKING SORTED LIST.... " + cell.toString()));
+		}
 
 		for (int i = 1; i < rows.size(); i++) {
+			
+			int index = i;
+			
+			rows.forEach(row -> row.forEach(cell -> LOGGER.warn("CHECKING SORTED ROWS DURING LOOP....CURRENT LOOP IS " + index + " " + cell.toString())));
 
 			// rows.forEach(row -> row.forEach(cell -> LOGGER.info("IN LOOP OF CLONING CELLS ----> " + cell.toString())));
 
@@ -345,19 +346,20 @@ public class ExcelUtilityHelper {
 
 			Row sortedRow = rows.get(i);
 			
-			// sortedRow.forEach(cell -> LOGGER.warn("SORTED ROW IN LOOP " + cell.toString()));
+			sortedRow.forEach(cell -> LOGGER.warn("CHECKING SORTED ROW IN FOR LOOP WITH INDEX OF " + index + " " + cell.toString()));
 
 			for (int j = 0; j < sortedRow.getPhysicalNumberOfCells(); j++) {
 
 				Cell cellToOverwrite = rowToOverwrite.getCell(j);
 
-				// LOGGER.info("Old cell is ->>>>> " + oldCell.toString());
+				LOGGER.info("CELL TO OVERWRITE ----> " + cellToOverwrite.toString());
 
 				Cell sortedCell = sortedRow.getCell(j);
+				
+				LOGGER.info("SORTED CELL ----> " + sortedCell.toString());
 
 				cloneCell(cellToOverwrite, sortedCell);
 
-				// LOGGER.info("New cell after cloning is ->>>>>> " + newCell.toString());
 			}
 		}
 	}
