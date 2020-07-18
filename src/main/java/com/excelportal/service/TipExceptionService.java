@@ -58,7 +58,12 @@ public class TipExceptionService {
 
 			areaCoachMap = getAreaCoachMap(columnNameMap, sheet);			
 
-			for (int indexOfRow = 0; indexOfRow < 3; indexOfRow++) {
+			for (int indexOfRow = 0; indexOfRow < 5; indexOfRow++) {
+				
+				if (indexOfRow == 3) {
+					
+					continue;
+				}
 
 				sheet.removeRow(sheet.getRow(indexOfRow));
 
@@ -114,7 +119,7 @@ public class TipExceptionService {
 
 			ExcelUtilityHelper.sortSheet(sheet, columnNameMap);
 			
-			for (int i = 1; i < lastRowNumberBeforeSorting; i++) {
+			for (int i = 1; i < lastRowNumberBeforeSorting + 1; i++) {
 				
 				sheet.removeRow(sheet.getRow(i));
 			}
