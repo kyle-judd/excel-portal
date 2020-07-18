@@ -2,47 +2,27 @@ package com.excelportal.service;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentHashMap.KeySetView;
 import java.util.stream.IntStream;
 
-import javax.persistence.Column;
-
-import org.apache.poi.common.usermodel.HyperlinkType;
 import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.CellType;
-import org.apache.poi.ss.usermodel.ClientAnchor;
-import org.apache.poi.ss.usermodel.Color;
 import org.apache.poi.ss.usermodel.CreationHelper;
-import org.apache.poi.ss.usermodel.DataFormat;
-import org.apache.poi.ss.usermodel.ExtendedColor;
 import org.apache.poi.ss.usermodel.FillPatternType;
 import org.apache.poi.ss.usermodel.Font;
-import org.apache.poi.ss.usermodel.FormulaEvaluator;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
-import org.apache.poi.ss.usermodel.Hyperlink;
 import org.apache.poi.ss.usermodel.IndexedColors;
-import org.apache.poi.ss.usermodel.RichTextString;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.VerticalAlignment;
-import org.apache.poi.ss.util.AreaReference;
-import org.apache.poi.ss.util.CellReference;
 import org.apache.poi.xssf.usermodel.XSSFCellStyle;
 import org.apache.poi.xssf.usermodel.XSSFColor;
-import org.apache.poi.xssf.usermodel.XSSFFont;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.jboss.logging.Logger;
 import org.jboss.logging.Logger.Level;
@@ -50,8 +30,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.excelportal.utility.ExcelUtilityHelper;
-
-import ch.qos.logback.classic.db.names.ColumnName;
 
 @Service
 public class TipExceptionService {
@@ -78,20 +56,21 @@ public class TipExceptionService {
 
 			columnNameMap = ExcelUtilityHelper.mapColumnNamesToIndex(headerRow);
 
-			areaCoachMap = getAreaCoachMap(columnNameMap, sheet);
+			areaCoachMap = getAreaCoachMap(columnNameMap, sheet);			
 
+			for (int indexOfRow = 0; indexOfRow < 3; indexOfRow++) {
+
+				sheet.removeRow(sheet.getRow(indexOfRow));
+
+			}
+			
+			ExcelUtilityHelper.removeEmptyRows(sheet);
+			
 			int totalRows = sheet.getPhysicalNumberOfRows();
 
-			for (int indexOfRow = 4; indexOfRow < totalRows; indexOfRow++) {
-
+			for (int indexOfRow = 1; indexOfRow < totalRows; indexOfRow++) {
+				
 				Row currentRow = sheet.getRow(indexOfRow);
-
-				if (currentRow.getRowNum() == 4) {
-
-					sheet.removeRow(currentRow);
-
-					continue;
-				}
 
 				int indexOfTipColumn = columnNameMap.get("Tip");
 
@@ -127,17 +106,20 @@ public class TipExceptionService {
 
 			}
 
-			for (int indexOfRow = 0; indexOfRow < 3; indexOfRow++) {
-
-				sheet.removeRow(sheet.getRow(indexOfRow));
-
-			}
-
 			ExcelUtilityHelper.removeEmptyRows(sheet);
 
 			setAreaCoachColumnValues(areaCoachMap, columnNameMap, sheet);
+			
+			int lastRowNumberBeforeSorting = sheet.getLastRowNum();
 
-			ExcelUtilityHelper.sortSheet(workbook, sheet, columnNameMap);
+			ExcelUtilityHelper.sortSheet(sheet, columnNameMap);
+			
+			for (int i = 1; i < lastRowNumberBeforeSorting; i++) {
+				
+				sheet.removeRow(sheet.getRow(i));
+			}
+			
+			ExcelUtilityHelper.removeEmptyRows(sheet);
 
 			styleCells(sheet, columnNameMap);
 

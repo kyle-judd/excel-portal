@@ -2,17 +2,16 @@ package com.excelportal.utility;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.compress.utils.Lists;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.CellValue;
 import org.apache.poi.ss.usermodel.FormulaEvaluator;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFFormulaEvaluator;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.jboss.logging.Logger;
@@ -70,13 +69,13 @@ public class ExcelUtilityHelper {
 			}
 		}
 	}
-	
-	/* private static void removeRows(Sheet sheet) {
 
-		for (int i = 1; i < sheet.getPhysicalNumberOfRows(); i++) {
-			sheet.removeRow(sheet.getRow(i));
-		}
-	}*/
+	/*
+	 * private static void removeRows(Sheet sheet) {
+	 * 
+	 * for (int i = 1; i < sheet.getPhysicalNumberOfRows(); i++) {
+	 * sheet.removeRow(sheet.getRow(i)); } }
+	 */
 
 	public static void removeEmptyRows(Sheet sheet) {
 
@@ -184,7 +183,7 @@ public class ExcelUtilityHelper {
 			newCell.setCellValue(oldCell.getCellFormula());
 
 		}
-		
+
 		newCell.setCellComment(oldCell.getCellComment());
 
 		newCell.setCellStyle(oldCell.getCellStyle());
@@ -300,21 +299,21 @@ public class ExcelUtilityHelper {
 		return sb.reverse().toString();
 
 	}
-	
-	public static void sortSheet(Workbook workbook, Sheet sheet, Map<String, Integer> columnNameMap) {
 
-		List<Row> rows = new ArrayList<>();
-		
+	public static void sortSheet(Sheet sheet, Map<String, Integer> columnNameMap) {
+
+		List<Row> sortedRows = new ArrayList<>();
+
 		for (int i = 1; i < sheet.getPhysicalNumberOfRows(); i++) {
-			
-			rows.add(sheet.getRow(i));
+
+			sortedRows.add(sheet.getRow(i));
 		}
 
 		int indexOfAreaCoachColumn = 1;
 
 		int indexOfStoreColumn = columnNameMap.get("Store");
 
-		rows.sort((row1, row2) -> {
+		sortedRows.sort((row1, row2) -> {
 
 			if (row1.getCell(indexOfAreaCoachColumn).getStringCellValue()
 					.equals(row2.getCell(indexOfAreaCoachColumn).getStringCellValue())) {
@@ -329,38 +328,32 @@ public class ExcelUtilityHelper {
 
 			}
 		});
+
+		sortedRows.forEach(row -> row.forEach(cell -> LOGGER.info("CHECK IF SORTED " + cell)));
+
+		Iterator<Row> rowIterator = sortedRows.iterator();
 		
-		for (Row row : rows) {
-			row.forEach(cell -> LOGGER.warn("CHECKING SORTED LIST.... " + cell.toString()));
-		}
+		int rowIndex = sheet.getLastRowNum() + 1;
 
-		for (int i = 1; i < rows.size(); i++) {
+		while (rowIterator.hasNext()) {
 			
-			int index = i;
+			LOGGER.info("ROW INDEX " + rowIndex);
+
+			Row blankRow = sheet.createRow(rowIndex);
+
+			Row sortedRow = rowIterator.next();
 			
-			rows.forEach(row -> row.forEach(cell -> LOGGER.warn("CHECKING SORTED ROWS DURING LOOP....CURRENT LOOP IS " + index + " " + cell.toString())));
+			// sortedRow.forEach(cell -> LOGGER.info("SORTED ROW ITERATOR " + "INDEX " + rowIndex + " " + cell));
 
-			// rows.forEach(row -> row.forEach(cell -> LOGGER.info("IN LOOP OF CLONING CELLS ----> " + cell.toString())));
+			for (int i = 0; i < sortedRow.getPhysicalNumberOfCells(); i++) {
 
-			Row rowToOverwrite = sheet.getRow(i);
+				Cell blankCell = blankRow.createCell(i);
 
-			Row sortedRow = rows.get(i);
-			
-			sortedRow.forEach(cell -> LOGGER.warn("CHECKING SORTED ROW IN FOR LOOP WITH INDEX OF " + index + " " + cell.toString()));
-
-			for (int j = 0; j < sortedRow.getPhysicalNumberOfCells(); j++) {
-
-				Cell cellToOverwrite = rowToOverwrite.getCell(j);
-
-				LOGGER.info("CELL TO OVERWRITE ----> " + cellToOverwrite.toString());
-
-				Cell sortedCell = sortedRow.getCell(j);
-				
-				LOGGER.info("SORTED CELL ----> " + sortedCell.toString());
-
-				cloneCell(cellToOverwrite, sortedCell);
+				cloneCell(blankCell, sortedRow.getCell(i));
 
 			}
+			
+			rowIndex++;
 		}
 	}
 
