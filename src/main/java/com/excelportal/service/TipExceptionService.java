@@ -49,15 +49,19 @@ public class TipExceptionService {
 			workbook = new XSSFWorkbook(tipExceptionReport.getInputStream());
 
 			Sheet sheet = workbook.getSheetAt(0);
-
-			ExcelUtilityHelper.insertNewColumnBefore(workbook, 0, 1);
-
+			
 			Row headerRow = sheet.getRow(3);
+			
+			headerRow.forEach(cell -> LOGGER.info("HEADER ROW ---> " + cell));
+			
+			ExcelUtilityHelper.insertNewColumnBefore(workbook, 0, 1);	
+			
+			headerRow.forEach(cell -> LOGGER.info("HEADER ROW AFTER insertNewColumnBefore()---> " + cell));
 
 			columnNameMap = ExcelUtilityHelper.mapColumnNamesToIndex(headerRow);
 
 			areaCoachMap = getAreaCoachMap(columnNameMap, sheet);			
-
+		
 			for (int indexOfRow = 0; indexOfRow < 5; indexOfRow++) {
 				
 				if (indexOfRow == 3) {
@@ -409,6 +413,8 @@ public class TipExceptionService {
 		style.setFont(font);
 
 		style.setAlignment(HorizontalAlignment.CENTER);
+		
+		style.setBorderTop(BorderStyle.MEDIUM);
 
 		style.setBorderBottom(BorderStyle.MEDIUM);
 
@@ -430,6 +436,10 @@ public class TipExceptionService {
 		for (int indexOfRow = 5; indexOfRow < totalRows; indexOfRow++) {
 
 			Row currentRow = sheet.getRow(indexOfRow);
+			
+			currentRow.forEach(cell -> LOGGER.info(cell));
+			
+			LOGGER.info(columnNameMap.get("Business Date"));
 
 			Cell businessDateCell = currentRow.getCell(columnNameMap.get("Business Date"));
 

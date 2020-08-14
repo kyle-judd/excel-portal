@@ -34,6 +34,12 @@ public class ExcelUtilityHelper {
 		for (short colIndex = minColumnIndex; colIndex < maxColumnIndex; colIndex++) {
 
 			Cell currentCell = row.getCell(colIndex);
+			
+			if (currentCell == null) {
+				continue;
+			}
+			
+			LOGGER.info("In mapColumnNamesToIndex() method..cell value is ---> " + currentCell);
 
 			columnNameMap.put(currentCell.getStringCellValue(), currentCell.getColumnIndex());
 
@@ -42,33 +48,6 @@ public class ExcelUtilityHelper {
 		return columnNameMap;
 	}
 
-	public static void filterForDriversWithOccurencesOfThreeOrMore(Sheet sheet, Map<String, Integer> driverMap,
-			Map<String, Integer> columnNameMap) {
-
-		for (int rowIndex = 1; rowIndex < sheet.getLastRowNum(); rowIndex++) {
-
-			if (sheet.getRow(rowIndex) == null) {
-
-				continue;
-
-			} else {
-
-				Row currentRow = sheet.getRow(rowIndex);
-
-				int indexOfDriverNameColumn = columnNameMap.get("Driver Name");
-
-				Cell driverNameCell = currentRow.getCell(indexOfDriverNameColumn);
-
-				String driverName = driverNameCell.getStringCellValue();
-
-				if (driverMap.get(driverName) < 3) {
-
-					sheet.removeRow(currentRow);
-
-				}
-			}
-		}
-	}
 
 	/*
 	 * private static void removeRows(Sheet sheet) {
